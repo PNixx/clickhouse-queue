@@ -130,7 +130,7 @@ class ClickhouseWorker extends Worker {
 	 */
 	public function received(Client $client, array $data): void {
 
-		$this->logger->debug('Received', $data);
+		$this->logger?->debug('Received', $data);
 		//New option when the table is sent in headers
 		//At the same time, it would be nice if the data format was correct, then you won’t have to decode and encode json.
 		//Because Clickhouse does not allow you to insert a number into the string column.
