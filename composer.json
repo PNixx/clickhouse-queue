@@ -1,0 +1,27 @@
+{
+    "name": "pnixx/clickhouse-queue",
+    "description": "Clickhouse insert buffer queue using RabbitMQ",
+    "require": {
+        "php": ">=8.1",
+        "workerman/workerman": "^5.0",
+        "workerman/stomp": "^v1.0",
+        "workerman/http-client": "^v2.1",
+        "psr/log": "^3.0",
+        "revolt/event-loop": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PNixx\\Clickhouse\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PNixx\\Clickhouse\\Test\\": "test/"
+        }
+    },
+    "minimum-stability": "beta",
+    "require-dev": {
+        "phpunit/phpunit": "*",
+        "monolog/monolog": "^3.5"
+    }
+}

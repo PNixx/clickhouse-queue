@@ -1,0 +1,8 @@
+vendor/
+.idea/
+config/secrets.ini
+config/test_secrets.ini
+log/
+composer.lock
+bin/
+tmp/
