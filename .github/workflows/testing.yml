@@ -1,0 +1,47 @@
+name: Testing
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  tests:
+    name: Testing
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        php-version: [ '8.2', '8.3' ]
+        clickhouse: [ '24.6' ]
+
+    services:
+      rabbitmq:
+        image: itzg/rabbitmq-stomp
+        ports:
+          - 61614:61613
+      clickhouse:
+        image: clickhouse/clickhouse-server:${{ matrix.clickhouse }}
+        ports:
+          - 18123:8123
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: sockets,pcntl,event
+
+      - name: Composer install
+        run: composer install
+
+      - name: Testing
+        run: php vendor/phpunit/phpunit/phpunit --display-warnings
+        env:
+          RABBIT_STOMP_PORT: 61614
+          CLICKHOUSE_PORT: 18123

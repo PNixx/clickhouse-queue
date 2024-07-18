@@ -39,6 +39,23 @@ This worker will listen the queue `clickhouse` and will inserting bulk data to C
 php examples/run.php start
 ```
 
+## Docker
+
+```bash
+docker build --rm -t clickhouse-queue .
+docker run --name clickhouse-queue clickhouse-queue
+```
+
+Environment variables:
+* `CLICKHOUSE_HOST` - ClickHouse host for inserts, default `localhost`
+* `CLICKHOUSE_PORT` - ClickHouse port for inserts, default `8123`
+* `CLICKHOUSE_DB` - ClickHouse database for inserts, default `default`
+* `RABBIT_HOST` - RabbitMQ host for subscribe, default `localhost`
+* `RABBIT_STOMP_PORT` - RabbitMQ STOMP port, default `61613`
+* `RABBIT_QUEUE` - RabbitMQ queue for buffer data
+* `MAX_DELAY` - time flush data to ClickHouse, default `5`
+* `MAX_FILE_SIZE` - max buffer size before flush to ClickHouse, default `5242880`
+
 ## Message structure
 
 Header `table`: to insert data into the specified table
@@ -47,6 +64,14 @@ Body: JSON as string row data
 
 ```json
 {"column1": "data1", "column2": "data2"}
+```
+
+## Development
+
+Testing GitHub actions:
+
+```bash
+act
 ```
 
 ## Donations

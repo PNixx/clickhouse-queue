@@ -11,17 +11,9 @@ class ClickhouseWorker extends Worker {
 	//Max buffer file size for export to clickhouse
 	public static int $max_file_size = 5242880;
 	//Max buffer delay in seconds for export to clickhouse
-	public static int $max_delay = 20;
+	public static int $max_delay = 5;
 
 	protected Client $client;
-
-	/**
-	 * @var array{
-	 *    clickhouse: array{host: string, port: int, database: string, user: string, password: string},
-	 *    stomp: array{host: string, port: int, queue: string, user: string, password: string}
-	 *  }
-	 */
-	protected readonly array $config;
 
 	//Unix process name
 	protected string $process_name;
@@ -37,29 +29,29 @@ class ClickhouseWorker extends Worker {
 	/**
 	 * @param array{
 	 *   clickhouse: array{host: string, port: int, database: string, user: string, password: string},
-	 *   stomp: array{host: string, port: int, queue: string, user: string, password: string}
+	 *   stomp: array{host: string, port: int, queue: string, user: string, password: string},
+	 *   max_delay: ?int, max_file_size: ?int
 	 * }                           $config
 	 * @param string               $tmp_directory
 	 * @param LoggerInterface|null $logger
 	 */
-	public function __construct(array $config, protected readonly string $tmp_directory, protected ?LoggerInterface $logger = null) {
+	public function __construct(protected readonly array $config, protected readonly string $tmp_directory, protected ?LoggerInterface $logger = null) {
 		parent::__construct();
 		$this->process_name = 'clickhouse-queue';
 		$this->onWorkerStart = $this->onWorkerStarted(...);
 		$this->onWorkerStop = $this->onStop(...);
-		$this->config = $config;
 		if( !is_dir($this->tmp_directory) ) {
 			mkdir($this->tmp_directory);
 		}
 		if( empty($this->config['stomp']['queue']) ) {
 			exit('STOMP queue missing');
 		}
+		self::$max_delay = $config['max_delay'] ?? null ?: self::$max_delay;
+		self::$max_file_size = $config['max_file_size'] ?? null ?: self::$max_file_size;
 	}
 
 	/**
 	 * Main working
-	 * @return void
-	 * @throws ClickhouseException
 	 */
 	public function onWorkerStarted(): void {
 		$this->logger?->info('Starting');
@@ -79,13 +71,7 @@ class ClickhouseWorker extends Worker {
 		$this->stompConnect();
 
 		//Initialize Clickhouse
-		new Clickhouse($this->config['clickhouse'], 120, $this->logger);
-
-		//Get information all tables
-		$tables = array_filter(array_column(Clickhouse::get()->execute('SHOW TABLES'), 'name'), fn($v) => !str_starts_with($v, '.'));
-		foreach( $tables as $table ) {
-			Clickhouse::get()->schema($table);
-		}
+		new Clickhouse($this->config['clickhouse'] ?? [], 120, $this->logger);
 
 		//Start queue updating
 		$this->queue();
@@ -129,29 +115,15 @@ class ClickhouseWorker extends Worker {
 	 * }             $data
 	 */
 	public function received(Client $client, array $data): void {
-
 		$this->logger?->debug('Received', $data);
-		//New option when the table is sent in headers
-		//At the same time, it would be nice if the data format was correct, then you won’t have to decode and encode json.
-		//Because Clickhouse does not allow you to insert a number into the string column.
-		if( isset($data['headers']['table']) ) {
-			$table = $data['headers']['table'];
-			$values = json_decode($data['body'], true);
-		} else {
-			//Old version
-			$body = json_decode($data['body'], true);
-			$table = $body['table'] ?? null;
-			$values = $body['values'] ?? null;
-		}
-		try {
-			if( empty($table) ) {
-				$this->logger?->error('Table name missing');
-			} else {
-				//Format data types
-				foreach( $values as $column => $value ) {
-					$values[$column] = Clickhouse::get()->convertToType($table, $column, $value);
-				}
 
+		$table = $data['headers']['table'] ?? null;
+		$values = $data['body'] ?? null;
+
+		try {
+			if( empty($table) || empty($values) ) {
+				$this->logger?->error('Table name or value missing');
+			} else {
 				//Append row
 				if( empty($this->fp[$table]) ) {
 					$this->fp[$table] = fopen($this->path($table), 'a+');
@@ -159,7 +131,7 @@ class ClickhouseWorker extends Worker {
 				}
 				//Lock file for write
 				if( flock($this->fp[$table], LOCK_EX) ) {
-					fwrite($this->fp[$table], json_encode($values, JSON_UNESCAPED_UNICODE) . PHP_EOL);
+					fwrite($this->fp[$table], $values . PHP_EOL);
 				}
 				flock($this->fp[$table], LOCK_UN);
 
@@ -267,6 +239,11 @@ class ClickhouseWorker extends Worker {
 			fclose($fp);
 			Clickhouse::get()->insert($data, $table);
 			unlink($path);
+		} catch (ClickhouseException $e) {
+			$this->logger?->warning('Response code: ' . $e->getCode() . ', message: ' . $e->getMessage());
+			if( $e->getCode() == 404 ) {
+				unlink($path);
+			}
 		} catch (\Throwable $e) {
 			$this->logger?->error(get_class($e) . ', ' . $e->getMessage(), array_slice($e->getTrace(), 0, 2));
 		}
@@ -275,10 +252,9 @@ class ClickhouseWorker extends Worker {
 	/**
 	 * Initialize STOMP connection
 	 * https://www.rabbitmq.com/stomp.html
-	 * @return void
 	 */
 	private function stompConnect(): void {
-		$this->client = new Client('stomp://' . $this->config['stomp']['host'] . ':' . $this->config['stomp']['port'], array_filter([
+		$this->client = new Client('stomp://' . ($this->config['stomp']['host'] ?? null ?: '127.0.0.1') . ':' . ($this->config['stomp']['port'] ?? null ?: 61613), array_filter([
 			'login'            => $this->config['stomp']['user'] ?? null,
 			'passcode'         => $this->config['stomp']['password'] ?? null,
 			'reconnect_period' => 1,
@@ -290,8 +266,11 @@ class ClickhouseWorker extends Worker {
 			$this->logger?->info('STOMP connected');
 			$suspension->resume();
 		};
-		$this->client->onError = function(\Exception $e) {
+		$this->client->onError = function(\Exception $e) use ($suspension) {
 			$this->logger?->warning('STOMP: ' . $e::class . ', ' . $e->getMessage());
+			if( defined('PHPUNIT_TEST') ) {
+				$suspension->throw($e);
+			}
 		};
 
 		//Connecting

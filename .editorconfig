@@ -28,7 +28,12 @@ indent_style = space
 indent_size = 4
 tab_width = 4
 
-[{*.php,*.phtml,run}]
+[*.yml]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+[{*.php,*.phtml,run,*.md,*.xml}]
 indent_size = 2
 max_line_length = 210
 tab_width = 2
