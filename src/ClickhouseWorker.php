@@ -255,8 +255,8 @@ class ClickhouseWorker extends Worker {
 	 */
 	private function stompConnect(): void {
 		$this->client = new Client('stomp://' . ($this->config['stomp']['host'] ?? null ?: '127.0.0.1') . ':' . ($this->config['stomp']['port'] ?? null ?: 61613), array_filter([
-			'login'            => $this->config['stomp']['user'] ?? null,
-			'passcode'         => $this->config['stomp']['password'] ?? null,
+			'login'            => $this->config['stomp']['user'] ?? null ?: 'guest',
+			'passcode'         => $this->config['stomp']['password'] ?? null ?: 'guest',
 			'reconnect_period' => 1,
 		]));
 

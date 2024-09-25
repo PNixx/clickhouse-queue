@@ -21,10 +21,12 @@ $worker = new ClickhouseWorker([
 		'host'     => getenv('CLICKHOUSE_HOST'),
 		'port'     => getenv('CLICKHOUSE_PORT'),
 	],
-	'stomp'      => [
-		'host'  => getenv('RABBIT_HOST'),
-		'port'  => getenv('RABBIT_STOMP_PORT'),
-		'queue' => getenv('RABBIT_QUEUE') ?: 'clickhouse',
+	'stomp'         => [
+		'host'     => getenv('RABBIT_HOST'),
+		'port'     => getenv('RABBIT_STOMP_PORT'),
+		'user'     => getenv('RABBIT_USER'),
+		'password' => getenv('RABBIT_PASSWORD'),
+		'queue'    => getenv('RABBIT_QUEUE') ?: 'clickhouse',
 	],
 	'max_delay'     => getenv('MAX_DELAY'),
 	'max_file_size' => getenv('MAX_FILE_SIZE'),

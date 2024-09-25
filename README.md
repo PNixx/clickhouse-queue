@@ -52,7 +52,9 @@ Environment variables:
 * `CLICKHOUSE_DB` - ClickHouse database for inserts, default `default`
 * `RABBIT_HOST` - RabbitMQ host for subscribe, default `localhost`
 * `RABBIT_STOMP_PORT` - RabbitMQ STOMP port, default `61613`
-* `RABBIT_QUEUE` - RabbitMQ queue for buffer data
+* `RABBIT_USER` - RabbitMQ STOMP login user, default `guest`
+* `RABBIT_PASSWORD` - RabbitMQ STOMP login password, default `guest`
+* `RABBIT_QUEUE` - RabbitMQ queue for buffer data, default `clickhouse`
 * `MAX_DELAY` - time flush data to ClickHouse, default `5`
 * `MAX_FILE_SIZE` - max buffer size before flush to ClickHouse, default `5242880`
 
