@@ -16,11 +16,14 @@ $handler->setFormatter(new LineFormatter(null, null, true));
 $logger->pushHandler($handler);
 
 $worker = new ClickhouseWorker([
-	'clickhouse'    => [
+	'clickhouse'    => array_filter([
 		'database' => getenv('CLICKHOUSE_DB'),
 		'host'     => getenv('CLICKHOUSE_HOST'),
 		'port'     => getenv('CLICKHOUSE_PORT'),
-	],
+		'user'     => getenv('CLICKHOUSE_USER'),
+		'password' => getenv('CLICKHOUSE_PASSWORD'),
+		'ssl'      => getenv('CLICKHOUSE_SSL') ?: null,
+	]),
 	'stomp'         => [
 		'host'     => getenv('RABBIT_HOST'),
 		'port'     => getenv('RABBIT_STOMP_PORT'),

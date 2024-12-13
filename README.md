@@ -50,6 +50,9 @@ Environment variables:
 * `CLICKHOUSE_HOST` - ClickHouse host for inserts, default `localhost`
 * `CLICKHOUSE_PORT` - ClickHouse port for inserts, default `8123`
 * `CLICKHOUSE_DB` - ClickHouse database for inserts, default `default`
+* `CLICKHOUSE_USER` - ClickHouse user, optional
+* `CLICKHOUSE_PASSWORD` - ClickHouse password, optional
+* `CLICKHOUSE_SSL` - ClickHouse need use HTTPS connection instead HTTP, default `false`
 * `RABBIT_HOST` - RabbitMQ host for subscribe, default `localhost`
 * `RABBIT_STOMP_PORT` - RabbitMQ STOMP port, default `61613`
 * `RABBIT_USER` - RabbitMQ STOMP login user, default `guest`

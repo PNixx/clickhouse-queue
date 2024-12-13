@@ -13,7 +13,8 @@ class Clickhouse {
 	/**
 	 * @var array{host: string, port: int, database: string, user: string, password: string}
 	 */
-	private array $config;
+	private readonly array $config;
+	private readonly bool $ssl;
 
 	private static Clickhouse $instance;
 	private readonly Client $client;
@@ -27,12 +28,13 @@ class Clickhouse {
 
 	/**
 	 * Clickhouse constructor.
-	 * @param array{host: string, port: int, database: string, user: ?string, password: ?string} $config
-	 * @param float                                                                              $request_timeout
-	 * @param LoggerInterface|null                                                               $logger
+	 * @param array{host: string, port: int, database: string, user: ?string, password: ?string, ssl: ?bool} $config
+	 * @param float                                                                                          $request_timeout
+	 * @param LoggerInterface|null                                                                           $logger
 	 */
 	public function __construct(array $config, float $request_timeout = 120, protected ?LoggerInterface &$logger = null) {
-		$this->config = array_merge(['database' => 'default', 'host' => '127.0.0.1', 'port' => 8123], array_filter($config));
+		$this->ssl = $config['ssl'] ?? false;
+		$this->config = array_merge(['database' => 'default', 'host' => '127.0.0.1', 'port' => 8123], array_diff_key(array_filter($config), array_flip(['ssl'])));
 		$this->client = new Client(['timeout' => $request_timeout]);
 		self::$instance = $this;
 	}
@@ -76,10 +78,17 @@ class Clickhouse {
 			'query'                            => 'INSERT INTO ' . $table . ' FORMAT JSONEachRow ',
 		];
 		try {
-			$this->request('http://' . $this->config['host'] . ':' . $this->config['port'] . '/?' . http_build_query($params), $data);
+			$this->request($this->schema() . $this->config['host'] . ':' . $this->config['port'] . '/?' . http_build_query($params), $data);
 		} finally {
 			$this->log($time, $params['query'] . '@-, data size: ' . round(strlen($data) / 1024, 2) . ' Kb');
 		}
+	}
+
+	/**
+	 * @return string
+	 */
+	private function schema(): string {
+		return $this->ssl ? 'https://' : 'http://';
 	}
 
 	/**
@@ -111,7 +120,7 @@ class Clickhouse {
 			'user'     => $this->config['user'] ?? null,
 			'password' => $this->config['password'] ?? null,
 		]);
-		$response = $this->request('http://' . $this->config['host'] . ':' . $this->config['port'] . '/?' . http_build_query($params), $sql . ' FORMAT JSON');
+		$response = $this->request($this->schema() . $this->config['host'] . ':' . $this->config['port'] . '/?' . http_build_query($params), $sql . ' FORMAT JSON');
 		return json_decode($response, true);
 	}
 
