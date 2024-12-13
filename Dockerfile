@@ -10,6 +10,6 @@ COPY --from=composer /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/clickhouse-queue
 COPY . /var/www/clickhouse-queue/
 
-RUN composer install
+RUN composer install --no-dev --no-interaction --optimize-autoloader
 
 ENTRYPOINT ["php", "examples/run.php", "start"]
