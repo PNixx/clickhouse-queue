@@ -9,8 +9,7 @@
         "psr/log": "^3.0",
         "revolt/event-loop": "^1.0",
         "ext-pcntl": "*",
-        "ext-sockets": "*",
-        "ext-event": "*"
+        "ext-sockets": "*"
     },
     "autoload": {
         "psr-4": {

@@ -58,6 +58,7 @@ Environment variables:
 * `RABBIT_USER` - RabbitMQ STOMP login user, default `guest`
 * `RABBIT_PASSWORD` - RabbitMQ STOMP login password, default `guest`
 * `RABBIT_QUEUE` - RabbitMQ queue for buffer data, default `clickhouse`
+* `RABBIT_VHOST` - RabbitMQ vhost, default `/`
 * `MAX_DELAY` - time flush data to ClickHouse, default `5`
 * `MAX_FILE_SIZE` - max buffer size before flush to ClickHouse, default `5242880`
 

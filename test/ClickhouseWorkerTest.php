@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use PNixx\Clickhouse\Clickhouse;
 use PNixx\Clickhouse\ClickhouseWorker;
 use Revolt\EventLoop;
-use Workerman\Events\Revolt;
+use Workerman\Events\Fiber;
 use Workerman\Stomp\Client;
 use Workerman\Timer;
 use Workerman\Worker;
@@ -27,7 +27,7 @@ class ClickhouseWorkerTest extends TestCase {
 		if( !is_dir(self::TMP) ) {
 			mkdir(self::TMP);
 		}
-		Worker::$globalEvent = new Revolt();
+		Worker::$globalEvent = new Fiber();
 		Timer::init(Worker::$globalEvent);
 	}
 

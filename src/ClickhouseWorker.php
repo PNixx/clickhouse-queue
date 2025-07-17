@@ -29,7 +29,7 @@ class ClickhouseWorker extends Worker {
 	/**
 	 * @param array{
 	 *   clickhouse: array{host: string, port: int, database: string, user: string, password: string},
-	 *   stomp: array{host: string, port: int, queue: string, user: string, password: string},
+	 *   stomp: array{host: string, port: int, queue: string, vhost: string, user: string, password: string},
 	 *   max_delay: ?int, max_file_size: ?int
 	 * }                           $config
 	 * @param string               $tmp_directory
@@ -258,6 +258,7 @@ class ClickhouseWorker extends Worker {
 			'login'            => $this->config['stomp']['user'] ?? null ?: 'guest',
 			'passcode'         => $this->config['stomp']['password'] ?? null ?: 'guest',
 			'reconnect_period' => 1,
+			'vhost'            => $this->config['stomp']['vhost'] ?? null ?: '/',
 		]));
 
 		//Wait connection success

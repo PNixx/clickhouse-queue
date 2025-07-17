@@ -15,8 +15,8 @@ jobs:
       fail-fast: true
       max-parallel: 1
       matrix:
-        php-version: [ '8.2', '8.3' ]
-        clickhouse: [ '24.6' ]
+        php-version: [ '8.2', '8.3', '8.4' ]
+        clickhouse: [ '24.9' ]
 
     services:
       rabbitmq:

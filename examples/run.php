@@ -6,6 +6,7 @@ use Monolog\Level;
 use Monolog\Logger;
 use PNixx\Clickhouse\ClickhouseWorker;
 use Workerman\Worker;
+use Workerman\Events\Fiber;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -14,6 +15,8 @@ $logger = new Logger('Worker');
 $handler = new StreamHandler('php://output', Level::Warning);
 $handler->setFormatter(new LineFormatter(null, null, true));
 $logger->pushHandler($handler);
+
+Worker::$eventLoopClass = Fiber::class;
 
 $worker = new ClickhouseWorker([
 	'clickhouse'    => array_filter([
@@ -30,6 +33,7 @@ $worker = new ClickhouseWorker([
 		'user'     => getenv('RABBIT_USER'),
 		'password' => getenv('RABBIT_PASSWORD'),
 		'queue'    => getenv('RABBIT_QUEUE') ?: 'clickhouse',
+		'vhost'    => getenv('RABBIT_VHOST') ?: '/',
 	],
 	'max_delay'     => getenv('MAX_DELAY'),
 	'max_file_size' => getenv('MAX_FILE_SIZE'),
