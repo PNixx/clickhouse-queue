@@ -1,6 +1,7 @@
 <?php
 namespace PNixx\Clickhouse;
 
+use Monolog\Level;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Workerman\Stomp\Client;
@@ -259,6 +260,7 @@ class ClickhouseWorker extends Worker {
 			'passcode'         => $this->config['stomp']['password'] ?? null ?: 'guest',
 			'reconnect_period' => 1,
 			'vhost'            => $this->config['stomp']['vhost'] ?? null ?: '/',
+			'debug'            => $this->logger && method_exists($this->logger, 'isHandling') && $this->logger->isHandling(Level::Debug),
 		]));
 
 		//Wait connection success

@@ -11,8 +11,12 @@ use Workerman\Events\Fiber;
 require __DIR__ . '/../vendor/autoload.php';
 
 // Create the logger
+$log_level = Level::Warning;
+if( getenv('LOG_LEVEL') ) {
+	$log_level = Level::fromName(getenv('LOG_LEVEL'));
+}
 $logger = new Logger('Worker');
-$handler = new StreamHandler('php://output', Level::Warning);
+$handler = new StreamHandler('php://output', $log_level);
 $handler->setFormatter(new LineFormatter(null, null, true));
 $logger->pushHandler($handler);
 
