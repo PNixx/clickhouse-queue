@@ -4,6 +4,7 @@ namespace PNixx\Clickhouse\Test;
 
 use PHPUnit\Framework\TestCase;
 use PNixx\Clickhouse\Clickhouse;
+use PNixx\Clickhouse\ClickhouseException;
 use PNixx\Clickhouse\ClickhouseWorker;
 use Revolt\EventLoop;
 use Workerman\Events\Fiber;
@@ -79,5 +80,17 @@ class ClickhouseWorkerTest extends TestCase {
 		} finally {
 			Clickhouse::get()->execute('DROP TABLE IF EXISTS test');
 		}
+	}
+
+	public function testInvalidUserAndPassword() {
+		$this->config['clickhouse']['user'] = 'fake' . uniqid();
+		$this->config['clickhouse']['password'] = 'fake' . uniqid();
+
+		$worker = new ClickhouseWorker($this->config, self::TMP);
+		$worker->onWorkerStarted();
+
+		$this->expectException(ClickhouseException::class);
+		$this->expectExceptionMessageMatches('/DB::Exception:\s+' . $this->config['clickhouse']['user'] . ':\s+Authentication failed/');
+		Clickhouse::get()->execute('SELECT 1');
 	}
 }

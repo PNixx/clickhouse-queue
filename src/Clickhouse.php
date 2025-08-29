@@ -66,8 +66,10 @@ class Clickhouse {
 	public function insert(string $data, string $table): void {
 		$time = microtime(true);
 
-		$params = [
+		$params = array_filter([
 			'database'                         => $this->config['database'],
+			'user'                             => $this->config['user'] ?? null ?: null,
+			'password'                         => $this->config['password'] ?? null ?: null,
 			'max_partitions_per_insert_block'  => 0,
 			'wait_end_of_query'                => 1,
 			'send_progress_in_http_headers'    => 1,
@@ -76,7 +78,7 @@ class Clickhouse {
 			'input_format_skip_unknown_fields' => 1,
 			'date_time_input_format'           => 'best_effort',
 			'query'                            => 'INSERT INTO ' . $table . ' FORMAT JSONEachRow ',
-		];
+		], fn($v) => $v !== null);
 		try {
 			$this->request($this->schema() . $this->config['host'] . ':' . $this->config['port'] . '/?' . http_build_query($params), $data);
 		} finally {
